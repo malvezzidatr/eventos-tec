@@ -30,5 +30,5 @@ public class Event {
 	private String imgUrl;
 	private String eventUrl;
 	private Boolean remote;
-	private Date date;
+	private Date data;
 }
