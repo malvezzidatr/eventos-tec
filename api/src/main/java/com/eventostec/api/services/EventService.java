@@ -21,7 +21,7 @@ public class EventService {
 	@Autowired
 	private AmazonS3 s3Client;
 
-	@Value("$-{aws.bucket.name}")
+	@Value("${aws.bucket.name}")
     private String bucketName;
 
 	public Event createEvent(EventRequestDTO data) throws IOException {
