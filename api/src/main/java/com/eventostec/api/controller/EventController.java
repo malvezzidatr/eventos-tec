@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,11 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.eventostec.api.domain.event.Event;
 import com.eventostec.api.domain.event.EventRequestDTO;
-import com.eventostec.api.services.EventService;
-
-import org.springframework.web.bind.annotation.GetMapping;
-
 import com.eventostec.api.domain.event.EventResponseDTO;
+import com.eventostec.api.services.EventService;
 
 
 
@@ -49,8 +47,8 @@ public class EventController {
 
     @GetMapping("event")
     public ResponseEntity<List<EventResponseDTO>> getEvents(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        List<EventResponseDTO> allEvents = this.eventService.getEvents(page, size);
-        
+        List<EventResponseDTO> allEvents = this.eventService.getUpcomingEvents(page, size);
+
         return ResponseEntity.ok(allEvents);
     }
     
