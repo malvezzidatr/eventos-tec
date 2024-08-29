@@ -34,6 +34,9 @@ public class EventService {
 	@Autowired
 	private EventRepository eventRepository;
 
+	@Autowired
+	private AddressService addressService;
+
 	private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
 
@@ -54,6 +57,10 @@ public class EventService {
 		newEvent.setRemote(data.remote());
 
 		eventRepository.save(newEvent);
+
+		if(!data.remote()) {
+			this.addressService.createAddress(data, newEvent);
+		}
 		logger.info("End - EventService - createEvent - title: {}", data.title());
 
 		return newEvent;
@@ -68,15 +75,37 @@ public class EventService {
 			event.getTitle(), 
 			event.getDescription(), 
 			event.getData(), 
-			"", 
-			"", 
+			event.getAddress() != null ? event.getAddress().getCity() : "", 
+			event.getAddress() != null ? event.getAddress().getUf() : "", 
 			event.getRemote(), 
 			event.getImgUrl(), 
 			event.getEventUrl()
 		)).stream().toList();
 	}
 	
-	
+	public List<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String uf, Date startDate, Date endDate) {
+		title = (title != null) ? title : "";
+		city = (city != null) ? city : "";
+		uf = (uf != null) ? uf : "";
+		startDate = (startDate != null) ? startDate : new Date(0);
+		endDate = (endDate != null) ? endDate : new Date();
+
+		Pageable pageable = PageRequest.of(page, size);
+		Page<Event> events = this.eventRepository.findFilteredEvents(title, city, uf, startDate, endDate, pageable);
+
+			return events.map(event -> new EventResponseDTO(
+			event.getId(), 
+			event.getTitle(), 
+			event.getDescription(), 
+			event.getData(), 
+			event.getAddress() != null ? event.getAddress().getCity() : "", 
+			event.getAddress() != null ? event.getAddress().getUf() : "", 
+			event.getRemote(), 
+			event.getImgUrl(), 
+			event.getEventUrl()
+		)).stream().toList();
+	};
+
 	private String uploadImg(MultipartFile multipartFile) throws IOException {
 		String fileName = UUID.randomUUID() + "-" + multipartFile.getOriginalFilename();
 		logger.info("Start - EventService - uploadImg - upload file name: {}", fileName);
