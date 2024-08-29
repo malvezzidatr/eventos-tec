@@ -1,6 +1,7 @@
 package com.eventostec.api.controller;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.eventostec.api.domain.event.Event;
 import com.eventostec.api.domain.event.EventRequestDTO;
 import com.eventostec.api.services.EventService;
+
+import org.springframework.web.bind.annotation.GetMapping;
+
+import com.eventostec.api.domain.event.EventResponseDTO;
+
 
 
 @RestController
@@ -40,4 +46,12 @@ public class EventController {
         logger.info("End - EventController - Create - title: {}", title);
         return ResponseEntity.ok(newEvent);
     }
+
+    @GetMapping("event")
+    public ResponseEntity<List<EventResponseDTO>> getEvents(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        List<EventResponseDTO> allEvents = this.eventService.getEvents(page, size);
+        
+        return ResponseEntity.ok(allEvents);
+    }
+    
 }
