@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.eventostec.api.domain.coupon.Coupon;
 import com.eventostec.api.domain.event.Event;
+import com.eventostec.api.domain.event.EventDetailsDTO;
 import com.eventostec.api.domain.event.EventRequestDTO;
 import com.eventostec.api.domain.event.EventResponseDTO;
 import com.eventostec.api.repositories.EventRepository;
@@ -36,6 +39,9 @@ public class EventService {
 
 	@Autowired
 	private AddressService addressService;
+
+	@Autowired
+	private CouponService couponService;
 
 	private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
@@ -139,4 +145,29 @@ public class EventService {
 			throw e;
 		}
 	}
+
+    public EventDetailsDTO getEventDetails(UUID eventId) {
+		Event event = this.eventRepository.findById(eventId)
+				.orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+		List<Coupon> coupons = this.couponService.consultCoupons(eventId, new Date());
+
+		List<EventDetailsDTO.CouponDTO> couponDTOs = coupons.stream()
+														.map(coupon -> new EventDetailsDTO.CouponDTO(
+															coupon.getCode(),
+															coupon.getDiscount(),
+															coupon.getValid()))
+														.collect(Collectors.toList());
+
+		return new EventDetailsDTO(
+			event.getId(),
+			event.getTitle(),
+			event.getDescription(),
+			event.getData(),
+			event.getAddress() != null ? event.getAddress().getCity() : "",
+			event.getAddress() != null ? event.getAddress().getUf() : "",
+			event.getImgUrl(),
+			event.getEventUrl(),
+			couponDTOs);
+    }
 }
