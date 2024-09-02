@@ -24,6 +24,7 @@ import com.eventostec.api.domain.event.Event;
 import com.eventostec.api.domain.event.EventDetailsDTO;
 import com.eventostec.api.domain.event.EventRequestDTO;
 import com.eventostec.api.domain.event.EventResponseDTO;
+import com.eventostec.api.domain.event.PaginatedResponse;
 import com.eventostec.api.repositories.EventRepository;
 
 @Service
@@ -72,24 +73,25 @@ public class EventService {
 		return newEvent;
 	}
 
-	public List<EventResponseDTO> getUpcomingEvents(int page, int size) {
+	public PaginatedResponse<EventResponseDTO> getUpcomingEvents(int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<Event> events = eventRepository.findUpComingEvents(new Date(), pageable);
-	
-		return events.map(event -> new EventResponseDTO(
-			event.getId(), 
-			event.getTitle(), 
-			event.getDescription(), 
-			event.getData(), 
-			event.getAddress() != null ? event.getAddress().getCity() : "", 
-			event.getAddress() != null ? event.getAddress().getUf() : "", 
-			event.getRemote(), 
-			event.getImgUrl(), 
-			event.getEventUrl()
-		)).stream().toList();
+		List<EventResponseDTO> eventResponseDTOs = events.map(event -> new EventResponseDTO(
+																event.getId(), 
+																event.getTitle(), 
+																event.getDescription(), 
+																event.getData(), 
+																event.getAddress() != null ? event.getAddress().getCity() : "", 
+																event.getAddress() != null ? event.getAddress().getUf() : "", 
+																event.getRemote(), 
+																event.getImgUrl(), 
+																event.getEventUrl()
+															)).stream().toList();
+		int totalPage = events.getTotalPages();
+		return new PaginatedResponse<>(eventResponseDTOs, totalPage);
 	}
 	
-	public List<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String uf, Date startDate, Date endDate) {
+	public PaginatedResponse<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String uf, Date startDate, Date endDate) {
 		title = (title != null) ? title : "";
 		city = (city != null) ? city : "";
 		uf = (uf != null) ? uf : "";
@@ -99,7 +101,7 @@ public class EventService {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<Event> events = this.eventRepository.findFilteredEvents(title, city, uf, startDate, endDate, pageable);
 
-			return events.map(event -> new EventResponseDTO(
+		List<EventResponseDTO> eventResponseDTOs = events.map(event -> new EventResponseDTO(
 			event.getId(), 
 			event.getTitle(), 
 			event.getDescription(), 
@@ -110,6 +112,9 @@ public class EventService {
 			event.getImgUrl(), 
 			event.getEventUrl()
 		)).stream().toList();
+
+		int totalPage = events.getTotalPages();
+		return new PaginatedResponse<>(eventResponseDTOs, totalPage);
 	};
 
 	private String uploadImg(MultipartFile multipartFile) throws IOException {
