@@ -78,4 +78,12 @@ public class EventController {
         return ResponseEntity.ok(eventDetails);
     } 
 
+    @GetMapping("event/history")
+    public ResponseEntity<PaginatedResponse<EventResponseDTO>> getOlderEvents(@RequestParam(defaultValue = "0") int page,
+                                            @RequestParam(defaultValue = "10") int size) {
+        PaginatedResponse<EventResponseDTO> olderEvents = this.eventService.getOlderEvents(page, size);
+
+        return ResponseEntity.ok(olderEvents);
+    }
+    
 }

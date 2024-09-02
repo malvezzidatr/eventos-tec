@@ -117,6 +117,26 @@ public class EventService {
 		return new PaginatedResponse<>(eventResponseDTOs, totalPage);
 	};
 
+	public PaginatedResponse<EventResponseDTO> getOlderEvents(int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<Event> events = eventRepository.findOlderEvents(new Date(), pageable);
+		List<EventResponseDTO> eventResponseDTOs = events.map(event -> new EventResponseDTO(
+			event.getId(), 
+			event.getTitle(), 
+			event.getDescription(), 
+			event.getData(), 
+			event.getAddress() != null ? event.getAddress().getCity() : "", 
+			event.getAddress() != null ? event.getAddress().getUf() : "", 
+			event.getRemote(), 
+			event.getImgUrl(), 
+			event.getEventUrl()
+		)).stream().toList();
+
+		int totalPage = events.getTotalPages();
+
+        return new PaginatedResponse<>(eventResponseDTOs, totalPage);
+    }
+
 	private String uploadImg(MultipartFile multipartFile) throws IOException {
 		String fileName = UUID.randomUUID() + "-" + multipartFile.getOriginalFilename();
 		logger.info("Start - EventService - uploadImg - upload file name: {}", fileName);
