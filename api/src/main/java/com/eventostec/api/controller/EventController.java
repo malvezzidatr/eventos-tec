@@ -52,7 +52,7 @@ public class EventController {
 
     @GetMapping("event")
     public ResponseEntity<PaginatedResponse<EventResponseDTO>> getEvents(@RequestParam(defaultValue = "0") int page,
-                                                            @RequestParam(defaultValue = "10") int size) {
+                                                                        @RequestParam(defaultValue = "10") int size) {
         PaginatedResponse<EventResponseDTO> allEvents = this.eventService.getUpcomingEvents(page, size);
 
         return ResponseEntity.ok(allEvents);
