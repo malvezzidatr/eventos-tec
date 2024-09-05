@@ -2,5 +2,6 @@
     "java.configuration.updateBuildConfiguration": "automatic",
     "workbench.colorCustomizations": {
         "terminal.background": "#111",
-    }
+    },
+    "java.debug.settings.onBuildFailureProceed": true
 }

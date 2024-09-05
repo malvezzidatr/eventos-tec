@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -27,7 +26,6 @@ import com.eventostec.api.domain.event.EventRequestDTO;
 import com.eventostec.api.domain.event.EventResponseDTO;
 import com.eventostec.api.domain.event.PaginatedResponse;
 import com.eventostec.api.services.EventService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(EventController.class)
 public class EventControllerTests {
@@ -149,8 +147,6 @@ public class EventControllerTests {
                                                             "www.test.com.br",
                                                             "www.test.com.br",
                                                             couponDTOList);
-
-        
 
         when(eventService.getEventDetails(eventId)).thenReturn(eventDetailsDTO);
 

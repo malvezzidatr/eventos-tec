@@ -84,8 +84,8 @@ public class EventService {
 																event.getAddress() != null ? event.getAddress().getCity() : "", 
 																event.getAddress() != null ? event.getAddress().getUf() : "", 
 																event.getRemote(), 
-																event.getImgUrl(), 
-																event.getEventUrl()
+																event.getEventUrl(),
+																event.getImgUrl()
 															)).stream().toList();
 		int totalPage = events.getTotalPages();
 		return new PaginatedResponse<>(eventResponseDTOs, totalPage);
@@ -109,8 +109,8 @@ public class EventService {
 			event.getAddress() != null ? event.getAddress().getCity() : "", 
 			event.getAddress() != null ? event.getAddress().getUf() : "", 
 			event.getRemote(), 
-			event.getImgUrl(), 
-			event.getEventUrl()
+			event.getEventUrl(),
+			event.getImgUrl()
 		)).stream().toList();
 
 		int totalPage = events.getTotalPages();
@@ -128,8 +128,8 @@ public class EventService {
 			event.getAddress() != null ? event.getAddress().getCity() : "", 
 			event.getAddress() != null ? event.getAddress().getUf() : "", 
 			event.getRemote(), 
-			event.getImgUrl(), 
-			event.getEventUrl()
+			event.getEventUrl(),
+			event.getImgUrl()
 		)).stream().toList();
 
 		int totalPage = events.getTotalPages();
