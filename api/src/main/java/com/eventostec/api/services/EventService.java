@@ -154,6 +154,7 @@ public class EventService {
 			logger.info("End - EventService - uploadImg - upload file name: {}, s3 url", fileName, s3Url);
 			return s3Url;
 		} catch (IOException e) {
+			System.out.println(e);
 			logger.error("End - EventService - uploadImg - upload file name: {}", fileName);
 			throw e;
 		}

@@ -1,5 +1,9 @@
 package com.eventostec.api.services;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +15,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,21 +24,29 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.eventostec.api.domain.address.Address;
 import com.eventostec.api.domain.coupon.Coupon;
 import com.eventostec.api.domain.event.Event;
 import com.eventostec.api.domain.event.EventDetailsDTO;
+import com.eventostec.api.domain.event.EventRequestDTO;
 import com.eventostec.api.domain.event.EventResponseDTO;
 import com.eventostec.api.domain.event.PaginatedResponse;
 import com.eventostec.api.repositories.EventRepository;
 
+@TestPropertySource("classpath:application-test.properties")
 public class EventServiceTests {
 
     @InjectMocks
@@ -45,9 +58,104 @@ public class EventServiceTests {
     @Mock
     private CouponService couponService;
 
+    @Mock
+    private AddressService addressService;
+
+    @Mock
+    private AmazonS3 s3Client;
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        ReflectionTestUtils.setField(eventService, "bucketName", "bucket");
+    }
+
+    @Test
+    void createEventShouldCreateEventWithRealImage() throws IOException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        InputStream imageStream = classLoader.getResourceAsStream("images/image-test.jpg");
+
+        assertNotNull(imageStream);
+
+        MultipartFile mockFile = new MockMultipartFile(
+            "image", 
+            "imagem-test.jpg", 
+            "image/jpeg", 
+            imageStream
+        );
+
+        EventRequestDTO requestDTO = new EventRequestDTO(
+            "Event test",
+            "Description test",
+            System.currentTimeMillis(),
+            "São Paulo",
+            "SP",
+            false,
+            "www.test.com.br",
+            mockFile
+        );
+
+        String s3Url = "https://s3.amazonaws.com/bucket/image-test.jpg";
+        when(s3Client.putObject(anyString(), anyString(), any(File.class))).thenReturn(null);
+        when(s3Client.getUrl(anyString(), anyString())).thenReturn(new URL(s3Url));
+
+        when(eventRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Event createdEvent = eventService.createEvent(requestDTO);
+
+        assertNotNull(createdEvent);
+        assertEquals(requestDTO.title(), createdEvent.getTitle());
+        assertEquals(requestDTO.description(), createdEvent.getDescription());
+        assertEquals(s3Url, createdEvent.getImgUrl());
+
+        verify(s3Client).putObject(anyString(), anyString(), any(File.class));
+        verify(eventRepository).save(any(Event.class));
+    }
+
+    @Test
+    void createEventShouldCreateEventWithoutImage() throws IOException {
+        EventRequestDTO requestDTO = new EventRequestDTO(
+            "Event test",
+            "Description test",
+            System.currentTimeMillis(),
+            "São Paulo",
+            "SP",
+            false,
+            "www.test.com.br",
+            null
+        );
+
+        when(eventRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Event createdEvent = eventService.createEvent(requestDTO);
+
+        assertNotNull(createdEvent);
+        assertEquals(requestDTO.title(), createdEvent.getTitle());
+        assertEquals(requestDTO.description(), createdEvent.getDescription());
+        assertNull(createdEvent.getImgUrl());
+    }
+
+    @Test
+    void createEventShouldCreateEventInSomewhere() throws IOException {
+        EventRequestDTO requestDTO = new EventRequestDTO(
+            "Event test",
+            "Description test",
+            System.currentTimeMillis(),
+            "São Paulo",
+            "SP",
+            true,
+            "www.test.com.br",
+            null
+        );
+
+        when(eventRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Event createdEvent = eventService.createEvent(requestDTO);
+
+        assertNotNull(createdEvent);
+        assertEquals(requestDTO.title(), createdEvent.getTitle());
+        assertEquals(requestDTO.description(), createdEvent.getDescription());
+        assertNull(createdEvent.getImgUrl());
     }
 
     @Test
