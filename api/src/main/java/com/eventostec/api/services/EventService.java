@@ -99,7 +99,11 @@ public class EventService {
 		endDate = (endDate != null) ? endDate : new Date();
 
 		Pageable pageable = PageRequest.of(page, size);
-		Page<Event> events = this.eventRepository.findFilteredEvents(title, city, uf, startDate, endDate, pageable);
+		Page<Event> events = eventRepository.findFilteredEvents(title, city, uf, startDate, endDate, pageable);
+
+		if (events == null) {
+			events = Page.empty(pageable);
+		}
 
 		List<EventResponseDTO> eventResponseDTOs = events.map(event -> new EventResponseDTO(
 			event.getId(), 

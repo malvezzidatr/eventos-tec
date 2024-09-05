@@ -1,5 +1,6 @@
 package com.eventostec.api.services;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -201,5 +203,84 @@ public class EventServiceTests {
         assertEquals("http://example.com/", dto.eventUrl());
         assertEquals("http://example.com/image.jpg", dto.imgUrl());
         assertEquals(1, response.getTotalPage());
+    }
+
+    @Test
+    public void getFilteredEventsShouldReturnEventsWhenSuccessful() {
+        UUID eventId = UUID.randomUUID();
+        Event event = Event.builder()
+                            .id(eventId)
+                            .title("Event test")
+                            .description("Event test")
+                            .data(new Date())
+                            .address(Address.builder().city("São Paulo").uf("SP").build())
+                            .remote(false)
+                            .eventUrl("www.test.com.br")
+                            .imgUrl("www.test.com.br")
+                            .build();
+
+        List<Event> eventList = List.of(event);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Event> eventPage = new PageImpl<>(eventList, pageable, eventList.size());
+
+        when(eventRepository.findFilteredEvents(anyString(), anyString(), anyString(), any(), any(), eq(pageable)))
+            .thenReturn(eventPage);
+
+        PaginatedResponse<EventResponseDTO> response = eventService.getFilteredEvents(0, 10, "Event test", "São Paulo", "SP", new Date(0), new Date());
+        
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+        EventResponseDTO dto = response.getContent().get(0);
+        assertEquals(eventId, dto.id());
+        assertEquals("Event test", dto.title());
+        assertEquals("São Paulo", dto.city());
+        assertEquals("SP", dto.uf());
+    }
+
+    @Test
+    public void getFilteredEventsShouldHandleNullFilters() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        Event event = Event.builder()
+                            .id(eventId)
+                            .title("Event test")
+                            .description("Event test")
+                            .data(new Date())
+                            .address(null)
+                            .remote(false)
+                            .eventUrl("www.test.com.br")
+                            .imgUrl("www.test.com.br")
+                            .build();
+
+        List<Event> eventList = List.of(event);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Event> eventPage = new PageImpl<>(eventList, pageable, eventList.size());
+
+        when(eventRepository.findFilteredEvents(anyString(), anyString(), anyString(), any(), any(), eq(pageable)))
+            .thenReturn(eventPage);
+
+        PaginatedResponse<EventResponseDTO> response = eventService.getFilteredEvents(0, 10, null, null, null, null, null);
+
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+        EventResponseDTO dto = response.getContent().get(0);
+        assertEquals(eventId, dto.id());
+        assertEquals("Event test", dto.title());
+        assertEquals("", dto.city());
+        assertEquals("", dto.uf());
+    }
+
+    @Test
+    public void getFilteredEventsShouldReturnEmptyWhenNoResults() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Event> emptyPage = new PageImpl<>(new ArrayList<>(), pageable, 0);
+
+        when(eventRepository.findFilteredEvents("Nonexistent Title", null, null, new Date(0), new Date(), pageable))
+            .thenReturn(emptyPage);
+
+        PaginatedResponse<EventResponseDTO> response = eventService.getFilteredEvents(0, 10, "", "", "NC", new Date(0), new Date());
+
+        assertNotNull(response);
+        assertTrue(response.getContent().isEmpty());
+        assertEquals(0, response.getTotalPage());
     }
 }
