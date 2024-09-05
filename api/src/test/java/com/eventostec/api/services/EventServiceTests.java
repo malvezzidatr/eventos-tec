@@ -2,8 +2,10 @@ package com.eventostec.api.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +27,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import com.eventostec.api.domain.address.Address;
+import com.eventostec.api.domain.coupon.Coupon;
 import com.eventostec.api.domain.event.Event;
+import com.eventostec.api.domain.event.EventDetailsDTO;
 import com.eventostec.api.domain.event.EventResponseDTO;
 import com.eventostec.api.domain.event.PaginatedResponse;
 import com.eventostec.api.repositories.EventRepository;
@@ -37,6 +41,9 @@ public class EventServiceTests {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private CouponService couponService;
 
     @BeforeEach
     public void setUp() {
@@ -282,5 +289,63 @@ public class EventServiceTests {
         assertNotNull(response);
         assertTrue(response.getContent().isEmpty());
         assertEquals(0, response.getTotalPage());
+    }
+
+    @Test void getEventsDetailsShouldReturnEventWhenSuccessful() {
+        UUID eventId = UUID.randomUUID();
+        Event event = Event.builder()
+                            .id(eventId)
+                            .title("Event test")
+                            .description("Event test")
+                            .data(new Date())
+                            .address(Address.builder().city("São Paulo").uf("SP").build())
+                            .remote(false)
+                            .eventUrl("www.test.com.br")
+                            .imgUrl("www.test.com.br")
+                            .build();
+        List<Coupon> coupons = Collections.singletonList(new Coupon(UUID.randomUUID(), "TEST20", 20, new Date(), event));
+        System.out.println(coupons);
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(couponService.consultCoupons(any(), any())).thenReturn(coupons);
+
+        EventDetailsDTO response = eventService.getEventDetails(eventId);
+
+        assertNotNull(response);
+        assertEquals(eventId, response.id());
+        assertEquals("Event test", response.title());
+        assertEquals("São Paulo", response.city());
+        assertEquals("SP", response.uf());
+
+        assertNotNull(response.coupons());
+        assertEquals(1, response.coupons().size());
+        EventDetailsDTO.CouponDTO couponDTO = response.coupons().get(0);
+        assertEquals("TEST20", couponDTO.code());
+        assertEquals(20, couponDTO.discount());
+        assertNotNull(couponDTO.validUntil());
+    }
+
+    @Test void getEventsDetailsShouldReturnNullAddressWhenSuccessful() {
+        UUID eventId = UUID.randomUUID();
+        Event event = Event.builder()
+                            .id(eventId)
+                            .title("Event test")
+                            .description("Event test")
+                            .data(new Date())
+                            .address(null)
+                            .remote(false)
+                            .eventUrl("www.test.com.br")
+                            .imgUrl("www.test.com.br")
+                            .build();
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        EventDetailsDTO response = eventService.getEventDetails(eventId);
+
+        assertNotNull(response);
+        assertEquals(eventId, response.id());
+        assertEquals("Event test", response.title());
+        assertEquals("", response.city());
+        assertEquals("", response.uf());
     }
 }
